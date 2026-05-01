@@ -15,13 +15,15 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           submodules: true
 
-      - name: set up JDK 17
+      - name: Set up JDK 17
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
           distribution: temurin
@@ -32,18 +34,24 @@ jobs:
         uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
 
       - name: Build APK
-        run: ./gradlew assemblePlayProdDebug
+        env:
+          GRADLE_OPTS: "-Xmx6g -XX:MaxMetaspaceSize=1g -Dkotlin.daemon.jvm.options=-Xmx3g"
+        run: ./gradlew assemblePlayProdDebug --no-daemon --max-workers=4 --stacktrace
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: signal-apk
-          path: app/build/outputs/**/*.apk
+          path: |
+            app/build/outputs/**/*.apk
+            Signal-Android/build/outputs/**/*.apk
 
       - name: Archive reports for failed build
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: reports
-          path: '*/build/reports'
+          path: |
+            */build/reports
+            **/build/reports
