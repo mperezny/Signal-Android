@@ -15,7 +15,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -36,7 +36,12 @@ jobs:
       - name: Build APK
         env:
           GRADLE_OPTS: "-Xmx3g -XX:MaxMetaspaceSize=768m -Dkotlin.daemon.jvm.options=-Xmx1536m"
-        run: ./gradlew assemblePlayProdDebug --no-daemon --max-workers=2 --stacktrace
+        run: |
+          ./gradlew :Signal-Android:assemblePlayProdDebug \
+            --build-cache \
+            --configuration-cache \
+            --no-daemon \
+            --max-workers=2
 
       - name: Upload APK
         if: success()
@@ -44,8 +49,8 @@ jobs:
         with:
           name: signal-apk
           path: |
-            app/build/outputs/**/*.apk
-            Signal-Android/build/outputs/**/*.apk
+            **/build/outputs/**/*.apk
+            **/build/outputs/**/*.aab
 
       - name: Archive reports for failed build
         if: failure()
@@ -53,5 +58,4 @@ jobs:
         with:
           name: reports
           path: |
-            */build/reports
             **/build/reports
