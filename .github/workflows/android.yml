@@ -33,23 +33,26 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
 
+      - name: List playProd tasks
+        run: ./gradlew tasks --all | grep -i playProd
+
       - name: Build APK
         env:
           GRADLE_OPTS: "-Xmx6g -XX:MaxMetaspaceSize=1g -Dkotlin.daemon.jvm.options=-Xmx3g"
-        run: ./gradlew assemblePlayProdDebug --no-daemon --max-workers=4 --stacktrace
+        run: ./gradlew assemblePlayProdRelease --no-daemon --max-workers=4 --stacktrace
 
       - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: signal-apk
+          name: signal-arm64-release
           path: |
-            app/build/outputs/**/*.apk
-            Signal-Android/build/outputs/**/*.apk
+            app/build/outputs/apk/playProd/release/*arm64-v8a*.apk
+            Signal-Android/build/outputs/apk/playProd/release/*arm64-v8a*.apk
 
       - name: Archive reports for failed build
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a0a
         with:
           name: reports
           path: |
