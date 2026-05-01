@@ -110,7 +110,7 @@ fun Resources.isSplitPane(
 
   val breakpoint = getWindowBreakpoint()
   if (breakpoint == WindowBreakpoint.SMALL) {
-    return false
+    return true
   }
 
   if (breakpoint == WindowBreakpoint.LARGE && displayMetrics.widthPixels < displayMetrics.heightPixels) {
