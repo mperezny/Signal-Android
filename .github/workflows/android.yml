@@ -33,6 +33,9 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
 
+      - name: List playProd tasks
+        run: ./gradlew tasks --all | grep -i playProd
+
       - name: Build APK
         env:
           GRADLE_OPTS: "-Xmx6g -XX:MaxMetaspaceSize=1g -Dkotlin.daemon.jvm.options=-Xmx3g"
