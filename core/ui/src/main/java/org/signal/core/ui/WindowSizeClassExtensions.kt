@@ -114,7 +114,7 @@ fun Resources.isSplitPane(
   }
 
   if (breakpoint == WindowBreakpoint.LARGE && displayMetrics.widthPixels < displayMetrics.heightPixels) {
-    return false
+    return true
   }
 
   return true
