@@ -37,16 +37,17 @@ jobs:
       - name: Configure Gradle memory
         run: |
           mkdir -p ~/.gradle
-          cat >> ~/.gradle/gradle.properties <<'EOF'
-          org.gradle.jvmargs=-Xmx1536m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8 -XX:+UseParallelGC
-          kotlin.daemon.jvmargs=-Xmx4096m
+          cat > ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -XX:+UseParallelGC
+          kotlin.daemon.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m -XX:+UseParallelGC
           org.gradle.parallel=false
           org.gradle.workers.max=1
+          android.enableJetifier=false
           EOF
 
       - name: Build PlayProd Release APK
         env:
-          GRADLE_OPTS: "-Xmx1536m -XX:MaxMetaspaceSize=512m"
+          GRADLE_OPTS: "-Xmx3072m -XX:MaxMetaspaceSize=768m"
         run: |
           ./gradlew :Signal-Android:assemblePlayProdRelease \
             --build-cache \
