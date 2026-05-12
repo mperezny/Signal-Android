@@ -433,7 +433,7 @@ class MainActivity :
 
       MainContainer {
         val wrappedNavigator = rememberNavigator(isSplitPane, contentLayoutData, maxWidth)
-        val listPaneWidth = contentLayoutData.rememberDefaultPanePreferredWidth(maxWidth)
+        val listPaneWidth = contentLayoutData.rememberDefaultPanePreferredWidth(maxWidth) + 96.dp
         val navigationType = NavigationType.rememberNavigationType()
 
         val anchors = remember(contentLayoutData, mainToolbarState, listPaneWidth, navigationType) {
