@@ -640,7 +640,7 @@ class MainActivity :
           },
           secondaryContent = {
             val listContainerColor = if (isSplitPane) {
-              Color.Black
+              SignalTheme.colors.colorSurface1
             } else {
               MaterialTheme.colorScheme.surface
             }
