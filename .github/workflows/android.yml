@@ -34,20 +34,26 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e
 
+      - name: Show runner memory
+        run: free -h
+
       - name: Configure Gradle memory
         run: |
           mkdir -p ~/.gradle
           cat > ~/.gradle/gradle.properties <<'EOF'
-          org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -XX:+UseParallelGC
-          kotlin.daemon.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=512m -XX:+UseParallelGC
+          org.gradle.jvmargs=-Xmx5632m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -XX:+UseParallelGC
+          kotlin.compiler.execution.strategy=in-process
+          kotlin.incremental=false
           org.gradle.parallel=false
           org.gradle.workers.max=1
+          org.gradle.caching=true
+          org.gradle.configuration-cache=false
           android.enableJetifier=false
           EOF
 
       - name: Build PlayProd Release APK
         env:
-          GRADLE_OPTS: "-Xmx3072m -XX:MaxMetaspaceSize=768m"
+          GRADLE_OPTS: "-Xmx5632m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -XX:+UseParallelGC"
         run: |
           ./gradlew :Signal-Android:assemblePlayProdRelease \
             --build-cache \
