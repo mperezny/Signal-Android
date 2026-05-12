@@ -59,13 +59,53 @@ jobs:
             --max-workers=1 \
             --stacktrace
 
-      - name: Upload ARM64 APK only
+      - name: Sign ARM64 APK
+        if: success()
+        env:
+          SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          set -e
+
+          printf '%s' "$SIGNING_KEYSTORE_BASE64" | base64 -d > signal-custom-release.jks
+
+          BUILD_TOOLS="$(ls -d "$ANDROID_HOME/build-tools/"* | sort -V | tail -n 1)"
+
+          UNSIGNED_APK="$(find . -path "*/build/outputs/apk/playProd/release/*arm64-v8a*release-unsigned*.apk" | head -n 1)"
+
+          if [ -z "$UNSIGNED_APK" ]; then
+            echo "Unsigned ARM64 APK not found"
+            find . -path "*/build/outputs/apk/**/*.apk"
+            exit 1
+          fi
+
+          echo "Unsigned APK: $UNSIGNED_APK"
+          echo "Build tools: $BUILD_TOOLS"
+
+          "$BUILD_TOOLS/zipalign" -p -f 4 "$UNSIGNED_APK" signal-playprod-arm64-v8a-release-aligned.apk
+
+          "$BUILD_TOOLS/apksigner" sign \
+            --ks signal-custom-release.jks \
+            --ks-key-alias "$SIGNING_KEY_ALIAS" \
+            --ks-pass "pass:$SIGNING_STORE_PASSWORD" \
+            --key-pass "pass:$SIGNING_KEY_PASSWORD" \
+            --out signal-playprod-arm64-v8a-release-signed.apk \
+            signal-playprod-arm64-v8a-release-aligned.apk
+
+          "$BUILD_TOOLS/apksigner" verify \
+            --verbose \
+            --print-certs \
+            signal-playprod-arm64-v8a-release-signed.apk
+
+      - name: Upload signed ARM64 APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: signal-playprod-release-arm64-v8a
+          name: signal-playprod-release-arm64-v8a-signed
           path: |
-            **/build/outputs/**/playProd/release/*arm64-v8a*.apk
+            signal-playprod-arm64-v8a-release-signed.apk
 
       - name: Archive reports for failed build
         if: failure()
