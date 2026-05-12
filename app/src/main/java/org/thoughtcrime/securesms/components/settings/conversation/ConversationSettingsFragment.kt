@@ -38,6 +38,7 @@ import org.signal.core.util.concurrent.LifecycleDisposable
 import org.signal.core.util.concurrent.addTo
 import org.signal.core.util.getParcelableArrayListExtraCompat
 import org.signal.core.util.orNull
+import org.signal.core.util.requireDrawable
 import org.signal.core.util.requireParcelableCompat
 import org.signal.donations.InAppPaymentType
 import org.thoughtcrime.securesms.AvatarPreviewActivity
@@ -91,8 +92,8 @@ import org.thoughtcrime.securesms.groups.ui.managegroup.dialogs.GroupDescription
 import org.thoughtcrime.securesms.groups.ui.managegroup.dialogs.GroupInviteSentDialog
 import org.thoughtcrime.securesms.groups.ui.managegroup.dialogs.GroupsLearnMoreBottomSheetDialogFragment
 import org.thoughtcrime.securesms.keyvalue.SignalStore
+import org.thoughtcrime.securesms.main.MainNavigationChatDetailRouter
 import org.thoughtcrime.securesms.main.MainNavigationDetailLocation
-import org.thoughtcrime.securesms.main.MainNavigationRouter
 import org.thoughtcrime.securesms.mediaoverview.MediaOverviewActivity
 import org.thoughtcrime.securesms.mediapreview.MediaIntentFactory
 import org.thoughtcrime.securesms.mediasend.camerax.CameraXRemoteConfig
@@ -111,7 +112,6 @@ import org.thoughtcrime.securesms.stories.dialogs.StoryDialogs
 import org.thoughtcrime.securesms.stories.viewer.AddToGroupStoryDelegate
 import org.thoughtcrime.securesms.stories.viewer.StoryViewerActivity
 import org.thoughtcrime.securesms.util.CommunicationActions
-import org.thoughtcrime.securesms.util.ContextUtil
 import org.thoughtcrime.securesms.util.DateUtils
 import org.thoughtcrime.securesms.util.ExpirationUtil
 import org.thoughtcrime.securesms.util.Material3OnScrollHelper
@@ -147,30 +147,28 @@ class ConversationSettingsFragment :
   private val alertDisabledTint by lazy { ContextCompat.getColor(requireContext(), R.color.signal_alert_primary_50) }
   private val colorizer = ColorizerV2()
   private val blockIcon by lazy {
-    ContextUtil.requireDrawable(requireContext(), R.drawable.symbol_block_24).apply {
+    requireContext().requireDrawable(R.drawable.symbol_block_24).apply {
       colorFilter = PorterDuffColorFilter(alertTint, PorterDuff.Mode.SRC_IN)
     }
   }
 
   private val leaveIcon by lazy {
-    ContextUtil.requireDrawable(requireContext(), R.drawable.symbol_leave_24).apply {
+    requireContext().requireDrawable(R.drawable.symbol_leave_24).apply {
       colorFilter = PorterDuffColorFilter(alertTint, PorterDuff.Mode.SRC_IN)
     }
   }
 
   private val endGroupIcon by lazy {
-    ContextUtil.requireDrawable(requireContext(), R.drawable.symbol_x_circle_24).apply {
+    requireContext().requireDrawable(R.drawable.symbol_x_circle_24).apply {
       colorFilter = PorterDuffColorFilter(alertTint, PorterDuff.Mode.SRC_IN)
     }
   }
 
   private val viewModel by viewModels<ConversationSettingsViewModel>(
     factoryProducer = {
-      val groupId = args.groupId as? GroupId
-
       ConversationSettingsViewModel.Factory(
         recipientId = args.recipientId,
-        groupId = groupId,
+        groupId = args.groupId,
         callMessageIds = args.callMessageIds ?: longArrayOf(),
         repository = ConversationSettingsRepository(requireContext()),
         messageRequestRepository = MessageRequestRepository(requireContext())
@@ -179,7 +177,7 @@ class ConversationSettingsFragment :
   )
 
   private var transitionCallback: TransitionCallback? = null
-  private var mainNavRouter: MainNavigationRouter? = null
+  private var chatRouter: MainNavigationChatDetailRouter? = null
 
   private lateinit var toolbar: Toolbar
   private lateinit var toolbarAvatarContainer: FrameLayout
@@ -196,7 +194,7 @@ class ConversationSettingsFragment :
   override fun onAttach(context: Context) {
     super.onAttach(context)
     transitionCallback = context as? TransitionCallback
-    mainNavRouter = context as? MainNavigationRouter
+    chatRouter = context as? MainNavigationChatDetailRouter
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -253,9 +251,7 @@ class ConversationSettingsFragment :
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
     return if (item.itemId == R.id.action_edit) {
       val args = ConversationSettingsFragmentArgs.fromBundle(requireArguments())
-      val groupId = args.groupId as GroupId
-
-      startActivity(CreateProfileActivity.getIntentForGroupProfile(requireActivity(), requireNotNull(groupId)))
+      startActivity(CreateProfileActivity.getIntentForGroupProfile(requireActivity(), requireNotNull(args.groupId)))
       true
     } else {
       super.onOptionsItemSelected(item)
@@ -263,8 +259,8 @@ class ConversationSettingsFragment :
   }
 
   private fun goToConversationList() {
-    if (mainNavRouter != null) {
-      mainNavRouter?.goTo(MainNavigationDetailLocation.Empty)
+    if (chatRouter != null) {
+      chatRouter?.exitDetailLocation()
     } else {
       startActivity(MainActivity.clearTopAndOpenDetail(requireContext(), MainNavigationDetailLocation.Empty))
     }
@@ -546,7 +542,9 @@ class ConversationSettingsFragment :
                   .build()
 
                 startActivity(intent)
-                requireActivity().finish()
+                if (requireActivity() !is MainNavigationChatDetailRouter) {
+                  requireActivity().finish()
+                }
               }
           }
         )
@@ -816,7 +814,9 @@ class ConversationSettingsFragment :
                 recipient = group,
                 onRowClick = {
                   CommunicationActions.startConversation(requireActivity(), group, null)
-                  requireActivity().finish()
+                  if (requireActivity() !is MainNavigationChatDetailRouter) {
+                    requireActivity().finish()
+                  }
                 }
               )
             )
@@ -914,7 +914,7 @@ class ConversationSettingsFragment :
             icon = DSLSettingsIcon.from(R.drawable.ic_link_16),
             isEnabled = state.recipient.isActiveGroup && !state.isDeprecatedOrUnregistered,
             onClick = {
-              navController.safeNavigate(ConversationSettingsFragmentDirections.actionConversationSettingsFragmentToShareableGroupLinkFragment(groupState.groupId.requireV2().toString()))
+              navController.safeNavigate(ConversationSettingsFragmentDirections.actionConversationSettingsFragmentToShareableGroupLinkFragment(groupState.groupId))
             }
           )
 

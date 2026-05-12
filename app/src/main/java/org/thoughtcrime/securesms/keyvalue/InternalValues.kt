@@ -32,10 +32,12 @@ class InternalValues internal constructor(store: KeyValueStore) : SignalStoreVal
     const val WEB_SOCKET_SHADOWING_STATS: String = "internal.web_socket_shadowing_stats"
     const val ENCODE_HEVC: String = "internal.hevc_encoding"
     const val FORCE_SPLIT_PANE_ON_COMPACT_LANDSCAPE: String = "internal.force.split.pane.on.compact.landscape.ui"
+    const val FORCE_SINGLE_PANE_ON_ALL_DEVICES: String = "internal.force_single_pane_on_all_devices"
     const val SHOW_ARCHIVE_STATE_HINT: String = "internal.show_archive_state_hint"
     const val INCLUDE_DEBUGLOG_IN_BACKUP: String = "internal.include_debuglog_in_backup"
     const val IMPORTED_BACKUP_DEBUG_INFO: String = "internal.imported_backup_debug_info"
     const val USE_NEW_MEDIA_ACTIVITY: String = "internal.use_new_media_activity"
+    const val ANR_DETECTION_CRASH: String = "internal.anr_detection_crash"
   }
 
   public override fun onFirstEverAppLaunch() = Unit
@@ -46,6 +48,11 @@ class InternalValues internal constructor(store: KeyValueStore) : SignalStoreVal
    * Force split-pane mode on compact landscape
    */
   var forceSplitPane by booleanValue(FORCE_SPLIT_PANE_ON_COMPACT_LANDSCAPE, false).falseForExternalUsers()
+
+  /**
+   * Force single-pane on all devices
+   */
+  var forceSinglePane by booleanValue(FORCE_SINGLE_PANE_ON_ALL_DEVICES, false).falseForExternalUsers()
 
   var useNewMediaActivity by booleanValue(USE_NEW_MEDIA_ACTIVITY, false).falseForExternalUsers()
 
@@ -183,6 +190,9 @@ class InternalValues internal constructor(store: KeyValueStore) : SignalStoreVal
 
   /** Any [BackupDebugInfo] that was imported during the last backup restore, if any. */
   var importedBackupDebugInfo: BackupDebugInfo? by protoValue(IMPORTED_BACKUP_DEBUG_INFO, BackupDebugInfo.ADAPTER).defaultForExternalUsers()
+
+  /** Enable ANR detector forcing a crash. */
+  var anrDetectionCrashes by booleanValue(ANR_DETECTION_CRASH, true).falseForExternalUsers()
 
   private fun <T> SignalStoreValueDelegate<T>.defaultForExternalUsers(): SignalStoreValueDelegate<T> {
     return this.withPrecondition { RemoteConfig.internalUser }

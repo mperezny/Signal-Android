@@ -207,9 +207,18 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
 
       switchPref(
         title = DSLSettingsText.from("Force split pane UI on phones."),
+        isEnabled = !state.forceSinglePane,
         isChecked = state.forceSplitPane,
         onClick = {
           viewModel.setForceSplitPane(!state.forceSplitPane)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("Force single-pane on newer devices."),
+        isChecked = state.forceSinglePane,
+        onClick = {
+          viewModel.setForceSinglePane(!state.forceSinglePane)
         }
       )
 
@@ -367,6 +376,14 @@ class InternalSettingsFragment : DSLSettingsFragment(R.string.preferences__inter
         onClick = {
           SignalStore.misc.lastKeyTransparencyTime = 0
           CheckKeyTransparencyJob.enqueueIfNecessary(addDelay = false)
+        }
+      )
+
+      switchPref(
+        title = DSLSettingsText.from("Enable ANR-induced crashing"),
+        isChecked = SignalStore.internal.anrDetectionCrashes,
+        onClick = {
+          SignalStore.internal.anrDetectionCrashes = !SignalStore.internal.anrDetectionCrashes
         }
       )
 
