@@ -4,7 +4,7 @@
  */
 
 package org.thoughtcrime.securesms
-
+import androidx.fragment.app.Fragment
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -640,7 +640,7 @@ class MainActivity :
           },
           secondaryContent = {
             val listContainerColor = if (isSplitPane) {
-              MaterialTheme.colorScheme.background
+              Color.Black
             } else {
               MaterialTheme.colorScheme.surface
             }
@@ -653,7 +653,11 @@ class MainActivity :
                 .clip(contentLayoutData.shape)
             ) {
               MainToolbar(
-                state = mainToolbarState,
+                state = if (isSplitPane) {
+                  mainToolbarState.copy(toolbarColor = Color.Black)
+                } else {
+                  mainToolbarState
+                },
                 callback = toolbarCallback
               )
 
@@ -666,7 +670,10 @@ class MainActivity :
                     AndroidFragment(
                       clazz = ConversationListFragment::class.java,
                       fragmentState = state,
-                      modifier = Modifier.fillMaxSize()
+                      modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+                      onUpdate = { forceBlackListPaneFragmentBackground(it) }
                     )
                   }
 
@@ -675,7 +682,10 @@ class MainActivity :
                     AndroidFragment(
                       clazz = ConversationListArchiveFragment::class.java,
                       fragmentState = state,
-                      modifier = Modifier.fillMaxSize()
+                      modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+                      onUpdate = { forceBlackListPaneFragmentBackground(it) }
                     )
                   }
 
@@ -684,7 +694,10 @@ class MainActivity :
                     AndroidFragment(
                       clazz = CallLogFragment::class.java,
                       fragmentState = state,
-                      modifier = Modifier.fillMaxSize()
+                      modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+                      onUpdate = { forceBlackListPaneFragmentBackground(it) }
                     )
                   }
 
@@ -693,7 +706,10 @@ class MainActivity :
                     AndroidFragment(
                       clazz = StoriesLandingFragment::class.java,
                       fragmentState = state,
-                      modifier = Modifier.fillMaxSize()
+                      modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black),
+                      onUpdate = { forceBlackListPaneFragmentBackground(it) }
                     )
                   }
                 }
@@ -833,6 +849,23 @@ class MainActivity :
         }
       }
     }
+  }
+
+  private fun forceBlackListPaneFragmentBackground(fragment: Fragment) {
+    val root = fragment.view ?: return
+    val black = android.graphics.Color.BLACK
+
+    fun applyBlack(view: View) {
+      if (view is ViewGroup) {
+        view.setBackgroundColor(black)
+        for (i in 0 until view.childCount) {
+          applyBlack(view.getChildAt(i))
+        }
+      }
+    }
+
+    root.setBackgroundColor(black)
+    applyBlack(root)
   }
 
   override fun getIntent(): Intent {
