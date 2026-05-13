@@ -19,6 +19,9 @@ object ChatColorsPalette {
     // region Solids
 
     @JvmField
+    val BLACK = ChatColors.forColor(ChatColors.Id.BuiltIn, 0xFF000000.toInt())
+
+    @JvmField
     val CRIMSON = ChatColors.forColor(ChatColors.Id.BuiltIn, 0xFFCF163E.toInt())
 
     @JvmField
@@ -166,6 +169,7 @@ object ChatColorsPalette {
      * If updating this list of colors, make sure to update the backup import/export colors as well.
      */
     val solids = listOf(
+      BLACK,
       CRIMSON,
       VERMILION,
       BURLAP,
