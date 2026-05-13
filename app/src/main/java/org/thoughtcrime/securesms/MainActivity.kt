@@ -434,7 +434,7 @@ class MainActivity :
 
       MainContainer {
         val wrappedNavigator = rememberNavigator(isSplitPane, contentLayoutData, maxWidth)
-        val listPaneWidth = contentLayoutData.rememberDefaultPanePreferredWidth(maxWidth) + 200.dp
+        val listPaneWidth = contentLayoutData.rememberDefaultPanePreferredWidth(maxWidth) + 300.dp
         val navigationType = NavigationType.rememberNavigationType()
 
         val anchors = remember(contentLayoutData, mainToolbarState, listPaneWidth, navigationType) {
@@ -804,9 +804,9 @@ class MainActivity :
     CompositionLocalProvider(LocalSnackbarStateConsumerRegistry provides mainNavigationViewModel.snackbarRegistry) {
       SignalTheme {
         val backgroundColor = if (!isSplitPane) {
-          MaterialTheme.colorScheme.surface
+          MaterialTheme.colorScheme.background
         } else {
-          SignalTheme.colors.colorSurface1
+          MaterialTheme.colorScheme.background
         }
 
         val modifier = when {
