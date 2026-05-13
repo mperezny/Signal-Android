@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.os.Build
@@ -117,6 +118,16 @@ class MediaPreviewV2Fragment :
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
+
+    view.setBackgroundColor(Color.BLACK)
+    binding.root.setBackgroundColor(Color.BLACK)
+    binding.mediaPager.setBackgroundColor(Color.BLACK)
+    binding.toolbarLayout.setBackgroundColor(Color.BLACK)
+    binding.toolbar.setBackgroundColor(Color.BLACK)
+    binding.mediaPreviewDetailsContainer.setBackgroundColor(Color.BLACK)
+    binding.mediaPreviewPlaybackControls.setBackgroundColor(Color.BLACK)
+    binding.mediaPreviewPlaybackControls.recyclerView.setBackgroundColor(Color.BLACK)
+    binding.mediaPreviewCaption.setBackgroundColor(Color.BLACK)
 
     val args = MediaIntentFactory.requireArguments(requireArguments())
     initializeViewModel(args)
