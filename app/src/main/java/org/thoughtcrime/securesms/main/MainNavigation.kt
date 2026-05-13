@@ -215,7 +215,7 @@ fun MainNavigationRail(
   onDestinationSelected: (MainNavigationListLocation) -> Unit
 ) {
   NavigationRail(
-    containerColor = SignalTheme.colors.colorSurface1
+    containerColor = Color.Black
   ) {
     Spacer(modifier = Modifier.height(40.dp).weight(1f, fill = false))
 
