@@ -20,6 +20,9 @@ import org.signal.libsignal.net.ChatConnectionListener
 import org.signal.libsignal.net.ChatServiceException
 import org.signal.libsignal.net.Network
 import org.signal.libsignal.net.UnauthenticatedChatConnection
+import org.signal.network.websocket.WebSocketRequestMessage
+import org.signal.network.websocket.WebSocketResponseMessage
+import org.signal.network.websocket.WebsocketResponse
 import org.whispersystems.signalservice.api.websocket.HealthMonitor
 import org.whispersystems.signalservice.api.websocket.WebSocketConnectionState
 import java.io.IOException
@@ -54,6 +57,7 @@ class LibSignalChatConnectionTest {
     clearAllMocks()
     every { healthMonitor.onMessageError(any(), any()) }
     every { healthMonitor.onKeepAliveResponse(any(), any()) }
+    every { healthMonitor.onReceivedAlerts(any(), any()) }
 
     // NB: We provide default success behavior mocks here to cut down on boilerplate later, but it is
     //  expected that some tests will override some of these to test failures.

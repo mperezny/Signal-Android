@@ -14,6 +14,7 @@ import org.signal.core.util.logging.Log
 import org.signal.core.util.orNull
 import org.signal.core.util.toOptional
 import org.signal.libsignal.zkgroup.receipts.ReceiptCredentialPresentation
+import org.signal.network.util.Preconditions
 import org.thoughtcrime.securesms.attachments.Attachment
 import org.thoughtcrime.securesms.attachments.LocalStickerAttachment
 import org.thoughtcrime.securesms.attachments.PointerAttachment
@@ -23,7 +24,6 @@ import org.thoughtcrime.securesms.components.emoji.EmojiUtil
 import org.thoughtcrime.securesms.contactshare.Contact
 import org.thoughtcrime.securesms.contactshare.ContactModelMapper
 import org.thoughtcrime.securesms.crypto.ProfileKeyUtil
-import org.thoughtcrime.securesms.crypto.SecurityEvent
 import org.thoughtcrime.securesms.database.AttachmentTable
 import org.thoughtcrime.securesms.database.MessageTable
 import org.thoughtcrime.securesms.database.MessageTable.InsertResult
@@ -78,7 +78,6 @@ import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.expireTimerDur
 import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.groupMasterKey
 import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.hasGroupContext
 import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.hasRemoteDelete
-import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.isEndSession
 import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.isExpirationUpdate
 import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.isInvalid
 import org.thoughtcrime.securesms.messages.SignalServiceProtoUtil.isMediaMessage
@@ -109,7 +108,6 @@ import org.thoughtcrime.securesms.util.hasGiftBadge
 import org.thoughtcrime.securesms.util.isStory
 import org.whispersystems.signalservice.api.crypto.EnvelopeMetadata
 import org.whispersystems.signalservice.api.payments.Money
-import org.whispersystems.signalservice.api.util.Preconditions
 import org.whispersystems.signalservice.internal.push.BodyRange
 import org.whispersystems.signalservice.internal.push.Content
 import org.whispersystems.signalservice.internal.push.DataMessage
@@ -172,7 +170,6 @@ object DataMessageProcessor {
     SignalTrace.beginSection("DataMessageProcessor#messageInsert")
     when {
       message.isInvalid -> handleInvalidMessage(context, senderRecipient.id, groupId, envelope.clientTimestamp!!)
-      message.isEndSession -> insertResult = handleEndSessionMessage(context, senderRecipient.id, envelope, metadata)
       message.isExpirationUpdate -> insertResult = handleExpirationUpdate(envelope, metadata, senderRecipient, threadRecipient.id, groupId, message.expireTimerDuration, message.expireTimerVersion, receivedTime, false)
       message.isStoryReaction -> insertResult = handleStoryReaction(context, envelope, metadata, message, senderRecipient.id, groupId)
       message.reaction != null -> messageId = handleReaction(context, envelope, message, senderRecipient.id, earlyMessageCacheEntry)
@@ -307,36 +304,6 @@ object DataMessageProcessor {
     if (insertResult != null) {
       SignalDatabase.messages.markAsInvalidMessage(insertResult.messageId)
       AppDependencies.messageNotifier.updateNotification(context, ConversationId.forConversation(insertResult.threadId))
-    }
-  }
-
-  private fun handleEndSessionMessage(
-    context: Context,
-    senderRecipientId: RecipientId,
-    envelope: Envelope,
-    metadata: EnvelopeMetadata
-  ): InsertResult? {
-    log(envelope.clientTimestamp!!, "End session message.")
-
-    val incomingMessage = IncomingMessage(
-      from = senderRecipientId,
-      sentTimeMillis = envelope.clientTimestamp!!,
-      serverTimeMillis = envelope.serverTimestamp!!,
-      receivedTimeMillis = System.currentTimeMillis(),
-      isUnidentified = metadata.sealedSender,
-      serverGuid = UuidUtil.getStringUUID(envelope.serverGuid, envelope.serverGuidBinary),
-      type = MessageType.END_SESSION
-    )
-
-    val insertResult: InsertResult? = SignalDatabase.messages.insertMessageInbox(incomingMessage).orNull()
-
-    return if (insertResult != null) {
-      AppDependencies.protocolStore.aci().deleteAllSessions(metadata.sourceServiceId.toString())
-      SecurityEvent.broadcastSecurityUpdateEvent(context)
-      AppDependencies.messageNotifier.updateNotification(context, ConversationId.forConversation(insertResult.threadId))
-      insertResult
-    } else {
-      null
     }
   }
 

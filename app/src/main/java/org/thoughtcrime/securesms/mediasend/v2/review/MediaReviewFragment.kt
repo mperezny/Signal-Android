@@ -42,7 +42,9 @@ import org.signal.core.util.logging.Log
 import org.thoughtcrime.securesms.R
 import org.thoughtcrime.securesms.contacts.paged.ContactSearchKey
 import org.thoughtcrime.securesms.conversation.MessageSendType
+import org.thoughtcrime.securesms.conversation.ReenableScheduledMessagesDialogFragment
 import org.thoughtcrime.securesms.conversation.ScheduleMessageContextMenu
+import org.thoughtcrime.securesms.conversation.ScheduleMessageDialogCallback
 import org.thoughtcrime.securesms.conversation.ScheduleMessageTimePickerBottomSheet
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardActivity
 import org.thoughtcrime.securesms.conversation.mutiselect.forward.MultiselectForwardFragmentArgs
@@ -54,6 +56,7 @@ import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionNavigator
 import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionState
 import org.thoughtcrime.securesms.mediasend.v2.MediaSelectionViewModel
 import org.thoughtcrime.securesms.mediasend.v2.stories.StoriesMultiselectForwardActivity
+import org.thoughtcrime.securesms.mediasend.v2.videos.VideoTrimData
 import org.thoughtcrime.securesms.mms.MediaConstraints
 import org.thoughtcrime.securesms.mms.SentMediaQuality
 import org.thoughtcrime.securesms.recipients.Recipient
@@ -75,7 +78,7 @@ import org.signal.core.ui.R as CoreUiR
 /**
  * Allows the user to view and edit selected media.
  */
-class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), ScheduleMessageTimePickerBottomSheet.ScheduleCallback, VideoThumbnailsRangeSelectorView.RangeDragListener {
+class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), ScheduleMessageTimePickerBottomSheet.ScheduleCallback, ScheduleMessageDialogCallback, VideoThumbnailsRangeSelectorView.RangeDragListener {
 
   private val sharedViewModel: MediaSelectionViewModel by viewModels(
     ownerProducer = { requireActivity() }
@@ -281,8 +284,7 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
             scheduledSendTime = null
             ScheduleMessageTimePickerBottomSheet.showSchedule(childFragmentManager)
           } else {
-            scheduledSendTime = time
-            sendButton.performClick()
+            startScheduledSend(time)
           }
         }
         true
@@ -339,7 +341,10 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
       pagerAdapter.submitMedia(state.selectedMedia)
 
       selectionAdapter.submitList(
-        state.selectedMedia.map { MediaReviewSelectedItem.Model(it, state.focusedMedia == it) } + MediaReviewAddItem.Model
+        state.selectedMedia.map {
+          val trimStartTimeUs = (state.editorStateMap[it.uri] as? VideoTrimData)?.startTimeUs ?: 0L
+          MediaReviewSelectedItem.Model(it, state.focusedMedia == it, trimStartTimeUs)
+        } + MediaReviewAddItem.Model
       )
 
       presentSendButton(readyToSend, state.sendType, state.recipient)
@@ -788,6 +793,18 @@ class MediaReviewFragment : Fragment(R.layout.v2_media_review_fragment), Schedul
   }
 
   override fun onScheduleSend(scheduledTime: Long) {
+    startScheduledSend(scheduledTime)
+  }
+
+  override fun onSchedulePermissionsGranted(metricId: String?, scheduledDate: Long) {
+    scheduledSendTime = scheduledDate
+    sendButton.performClick()
+  }
+
+  private fun startScheduledSend(scheduledTime: Long) {
+    if (ReenableScheduledMessagesDialogFragment.showIfNeeded(requireContext(), childFragmentManager, null, scheduledTime)) {
+      return
+    }
     scheduledSendTime = scheduledTime
     sendButton.performClick()
   }

@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import org.signal.core.ui.compose.DayNightPreviews
 import org.signal.core.ui.compose.Dialogs
-import org.signal.core.ui.compose.IconButtons.IconButton
 import org.signal.core.ui.compose.Previews
 import org.signal.core.ui.compose.Scaffolds
 import org.signal.core.ui.compose.SignalIcons
@@ -298,11 +297,21 @@ private fun AutomaticKeyVerificationBlock(
         .background(color = SignalTheme.colors.colorSurface1, shape = RoundedCornerShape(38.dp))
         .padding(horizontal = 16.dp)
     ) { targetStatus ->
+      val hasInfoSheet = targetStatus != AutomaticVerificationStatus.NONE && targetStatus != AutomaticVerificationStatus.VERIFYING
+
       Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.clickable(enabled = targetStatus == AutomaticVerificationStatus.NONE, onClick = {
-          emitter(VerifyDisplayScreenEvent.VerifyAutomaticallyClick)
-        }, role = Role.Button)
+        modifier = Modifier.clickable(
+          enabled = targetStatus == AutomaticVerificationStatus.NONE || hasInfoSheet,
+          onClick = {
+            if (targetStatus == AutomaticVerificationStatus.NONE) {
+              emitter(VerifyDisplayScreenEvent.VerifyAutomaticallyClick)
+            } else {
+              displayEncryptedSheet = true
+            }
+          },
+          role = Role.Button
+        )
       ) {
         if (targetStatus == AutomaticVerificationStatus.VERIFYING) {
           CircularProgressIndicator(
@@ -322,21 +331,18 @@ private fun AutomaticKeyVerificationBlock(
           modifier = Modifier
             .padding(vertical = 16.dp)
             .padding(start = 12.dp)
+            .weight(1f, fill = false)
         )
 
-        if (targetStatus != AutomaticVerificationStatus.NONE && targetStatus != AutomaticVerificationStatus.VERIFYING) {
-          IconButton(onClick = {
-            displayEncryptedSheet = true
-          }) {
-            Icon(
-              imageVector = SignalIcons.ChevronRight.imageVector,
-              contentDescription = null,
-              tint = MaterialTheme.colorScheme.outline,
-              modifier = Modifier
-                .padding(start = 2.dp)
-                .size(16.dp)
-            )
-          }
+        if (hasInfoSheet) {
+          Icon(
+            imageVector = SignalIcons.ChevronRight.imageVector,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.outline,
+            modifier = Modifier
+              .padding(start = 2.dp)
+              .size(16.dp)
+          )
         }
       }
     }

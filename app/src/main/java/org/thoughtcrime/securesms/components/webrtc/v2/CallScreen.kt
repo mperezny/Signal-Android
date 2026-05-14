@@ -81,6 +81,7 @@ import org.thoughtcrime.securesms.recipients.Recipient
 import org.thoughtcrime.securesms.recipients.RecipientId
 import org.thoughtcrime.securesms.ringrtc.CameraState
 import org.thoughtcrime.securesms.service.webrtc.PendingParticipantCollection
+import org.thoughtcrime.securesms.util.RemoteConfig
 import kotlin.math.max
 import kotlin.math.round
 import kotlin.time.Duration.Companion.milliseconds
@@ -103,8 +104,10 @@ fun CallScreen(
   savedLocalParticipantLandscape: Boolean = false,
   callScreenState: CallScreenState,
   callControlsState: CallControlsState,
+  callParticipantsPagerState: CallParticipantsPagerState,
   callScreenController: CallScreenController = CallScreenController.rememberCallScreenController(
     skipHiddenState = callControlsState.skipHiddenState,
+    hasMultipleRemoteParticipants = callParticipantsPagerState.callParticipants.size > 1,
     onControlsToggled = {},
     callControlsState = callControlsState,
     callControlsListener = CallScreenControlsListener.Empty
@@ -112,7 +115,6 @@ fun CallScreen(
   callScreenControlsListener: CallScreenControlsListener = CallScreenControlsListener.Empty,
   callScreenSheetDisplayListener: CallScreenSheetDisplayListener = CallScreenSheetDisplayListener.Empty,
   additionalActionsListener: AdditionalActionsListener = AdditionalActionsListener.Empty,
-  callParticipantsPagerState: CallParticipantsPagerState,
   pendingParticipantsListener: PendingParticipantsListener = PendingParticipantsListener.Empty,
   callParticipantUpdatePopupController: CallParticipantUpdatePopupController,
   overflowParticipants: List<CallParticipant>,
@@ -171,11 +173,16 @@ fun CallScreen(
   val additionalActionsPopupState = TriggerAlignedPopupState.rememberTriggerAlignedPopupState()
   val additionalActionsState = remember(
     callScreenState.reactions,
-    localParticipant.isHandRaised
+    localParticipant.isHandRaised,
+    callScreenState.isLocalScreenSharing,
+    callControlsState.displayEndCallButton
   ) {
     AdditionalActionsState(
       reactions = callScreenState.reactions,
       isSelfHandRaised = localParticipant.isHandRaised,
+      isScreenSharing = callScreenState.isLocalScreenSharing,
+      displayScreenShareToggle = callControlsState.displayEndCallButton && RemoteConfig.screenSharing,
+      isGroupCall = callControlsState.isGroupCall,
       listener = additionalActionsListener,
       triggerAlignedPopupState = additionalActionsPopupState
     )
@@ -505,7 +512,7 @@ fun CallScreen(
   )
 
   SwipeToSpeakerHintPopup(
-    visible = callScreenState.displaySwipeToSpeakerHint,
+    hintType = callScreenState.swipeHint,
     onDismiss = onSwipeToSpeakerHintDismissed,
     modifier = Modifier
       .statusBarsPadding()
