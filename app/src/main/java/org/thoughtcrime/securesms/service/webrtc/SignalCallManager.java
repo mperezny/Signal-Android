@@ -76,7 +76,7 @@ import org.thoughtcrime.securesms.webrtc.CallNotificationBuilder;
 import org.thoughtcrime.securesms.webrtc.audio.SignalAudioManager;
 import org.thoughtcrime.securesms.webrtc.locks.LockManager;
 import org.webrtc.PeerConnection;
-import org.whispersystems.signalservice.api.NetworkResult;
+import org.signal.network.NetworkResult;
 import org.whispersystems.signalservice.api.NetworkResultUtil;
 import org.whispersystems.signalservice.api.crypto.SealedSenderAccess;
 import org.whispersystems.signalservice.api.crypto.UntrustedIdentityException;
@@ -263,6 +263,18 @@ public final class SignalCallManager implements CallManager.Observer, GroupCall.
 
   public void setEnableVideo(boolean enabled) {
     process((s, p) -> p.handleSetEnableVideo(s, enabled));
+  }
+
+  public void startScreenShare(@NonNull android.content.Intent mediaProjectionData) {
+    process((s, p) -> p.handleSetLocalScreenShare(s, true, mediaProjectionData));
+  }
+
+  public void stopScreenShare() {
+    process((s, p) -> p.handleSetLocalScreenShare(s, false, null));
+  }
+
+  public void onScreenSharingServiceReady() {
+    process((s, p) -> p.handleScreenSharingServiceReady(s));
   }
 
   public void setIncomingRingingVanity(boolean enabled) {

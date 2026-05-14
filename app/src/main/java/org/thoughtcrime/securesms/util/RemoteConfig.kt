@@ -1142,7 +1142,7 @@ object RemoteConfig {
   @JvmStatic
   @get:JvmName("useMessageSendRestFallback")
   val useMessageSendRestFallback: Boolean by remoteBoolean(
-    key = "android.useMessageSendRestFallback",
+    key = "android.useMessageSendRestFallback.2",
     defaultValue = false,
     hotSwappable = true
   )
@@ -1289,6 +1289,17 @@ object RemoteConfig {
   )
 
   /**
+   * Enables software Vp9 support for 1:1 calls
+   */
+  @JvmStatic
+  @get:JvmName("enableSoftwareVp9")
+  val enableSoftwareVp9: Boolean by remoteBoolean(
+    key = "android.calling.enableSoftwareVp9",
+    defaultValue = false,
+    hotSwappable = true
+  )
+
+  /**
    * Whether or not to allow admins to terminate groups.
    */
   @JvmStatic
@@ -1350,6 +1361,28 @@ object RemoteConfig {
   @get:JvmName("exactAlarm")
   val exactAlarm: Boolean by remoteBoolean(
     key = "android.exactAlarm",
+    defaultValue = false,
+    hotSwappable = true
+  )
+
+  /**
+   * Whether to use our custom [org.signal.core.util.Linkifier] for web URL detection.
+   */
+  @JvmStatic
+  @get:JvmName("useNewLinkifier")
+  val useNewLinkifier: Boolean by remoteBoolean(
+    key = "android.useNewLinkifier",
+    defaultValue = false,
+    hotSwappable = true
+  )
+
+  /**
+   * Whether screen sharing is available during calls.
+   */
+  @JvmStatic
+  @get:JvmName("screenSharing")
+  val screenSharing: Boolean by remoteBoolean(
+    key = "android.calling.screenSharing",
     defaultValue = false,
     hotSwappable = true
   )

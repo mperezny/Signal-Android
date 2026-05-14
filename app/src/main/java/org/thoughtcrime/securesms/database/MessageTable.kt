@@ -32,7 +32,6 @@ import org.signal.core.util.Base64
 import org.signal.core.util.CursorUtil
 import org.signal.core.util.SqlUtil
 import org.signal.core.util.SqlUtil.buildArgs
-import org.signal.core.util.SqlUtil.buildCustomCollectionQuery
 import org.signal.core.util.SqlUtil.buildSingleCollectionQuery
 import org.signal.core.util.SqlUtil.buildTrueUpdateQuery
 import org.signal.core.util.SqlUtil.getNextAutoIncrementId
@@ -316,6 +315,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     private const val INDEX_THREAD_UNREAD_COUNT = "message_thread_unread_count_index"
     private const val INDEX_STORY_TYPE = "message_story_type_index"
     private const val INDEX_ARCHIVED_STORY = "message_story_archived_index"
+    private const val INDEX_STARRED = "message_starred_index"
 
     @JvmField
     val CREATE_INDEXS = arrayOf(
@@ -344,7 +344,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
       "CREATE INDEX IF NOT EXISTS message_pinned_at_index ON $TABLE_NAME ($PINNED_AT)",
       "CREATE INDEX IF NOT EXISTS message_deleted_by_index ON $TABLE_NAME ($DELETED_BY)",
       "CREATE INDEX IF NOT EXISTS $INDEX_ARCHIVED_STORY ON $TABLE_NAME ($STORY_ARCHIVED, $STORY_TYPE, $DATE_SENT) WHERE $STORY_TYPE > 0 AND $STORY_ARCHIVED > 0",
-      "CREATE INDEX IF NOT EXISTS message_starred_index ON $TABLE_NAME ($STARRED) WHERE $STARRED > 0",
+      "CREATE INDEX IF NOT EXISTS $INDEX_STARRED ON $TABLE_NAME ($STARRED) WHERE $STARRED > 0",
       "CREATE INDEX IF NOT EXISTS message_collapsed_state_index ON $TABLE_NAME ($COLLAPSED_STATE)",
       "CREATE INDEX IF NOT EXISTS message_collapsed_head_id_index ON $TABLE_NAME ($COLLAPSED_HEAD_ID)"
     )
@@ -2205,7 +2205,7 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
       args = null
     }
 
-    return mmsReaderFor(queryMessages(where, args, reverse = true)).use { reader ->
+    return mmsReaderFor(queryMessages(where, args, reverse = true, index = INDEX_STARRED)).use { reader ->
       reader.mapNotNull { it }
     }.withAttachments()
   }
@@ -4908,37 +4908,39 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
     }
 
     val byQuoteDescriptor: MutableMap<QuoteDescriptor, MessageRecord> = HashMap(records.size)
-    val args: MutableList<Array<String>> = ArrayList(records.size)
+    val timestamps: MutableList<Long> = ArrayList(records.size)
 
     for (record in records) {
       val timestamp = record.dateSent
 
       byQuoteDescriptor[QuoteDescriptor(timestamp, record.fromRecipient.id)] = record
-      args.add(buildArgs(timestamp, record.fromRecipient.id, -1))
+      timestamps.add(timestamp)
     }
 
     val quotedIds: MutableSet<Long> = mutableSetOf()
 
     val pastRevisionMessageIds = records.mapNotNull { it.originalMessageId?.id }.toSet()
 
-    buildCustomCollectionQuery("$QUOTE_ID = ?  AND $QUOTE_AUTHOR = ? AND $SCHEDULED_DATE = ?", args).forEach { query ->
-      readableDatabase
-        .select(ID, QUOTE_ID, QUOTE_AUTHOR)
-        .from(TABLE_NAME)
-        .where(query.where, query.whereArgs)
-        .run()
-        .forEach { cursor ->
-          val messageId = cursor.requireLong(ID)
-          if (messageId !in pastRevisionMessageIds) {
-            val quoteLocator = QuoteDescriptor(
-              timestamp = cursor.requireLong(QUOTE_ID),
-              author = RecipientId.from(cursor.requireNonNullString(QUOTE_AUTHOR))
-            )
+    val quoteIdQuery = SqlUtil.buildFastCollectionQuery(QUOTE_ID, timestamps)
 
+    readableDatabase
+      .select(ID, QUOTE_ID, QUOTE_AUTHOR)
+      .from(TABLE_NAME)
+      .where("${quoteIdQuery.where} AND $SCHEDULED_DATE = -1", quoteIdQuery.whereArgs)
+      .run()
+      .forEach { cursor ->
+        val messageId = cursor.requireLong(ID)
+        if (messageId !in pastRevisionMessageIds) {
+          val quoteLocator = QuoteDescriptor(
+            timestamp = cursor.requireLong(QUOTE_ID),
+            author = RecipientId.from(cursor.requireNonNullString(QUOTE_AUTHOR))
+          )
+
+          if (byQuoteDescriptor.containsKey(quoteLocator)) {
             quotedIds += byQuoteDescriptor[quoteLocator]!!.id
           }
         }
-    }
+      }
 
     return quotedIds
   }
@@ -6135,7 +6137,6 @@ open class MessageTable(context: Context?, databaseHelper: SignalDatabase) : Dat
       MessageType.IDENTITY_UPDATE -> MessageTypes.KEY_EXCHANGE_IDENTITY_UPDATE_BIT or MessageTypes.BASE_INBOX_TYPE
       MessageType.IDENTITY_VERIFIED -> MessageTypes.KEY_EXCHANGE_IDENTITY_VERIFIED_BIT or MessageTypes.BASE_INBOX_TYPE
       MessageType.IDENTITY_DEFAULT -> MessageTypes.KEY_EXCHANGE_IDENTITY_DEFAULT_BIT or MessageTypes.BASE_INBOX_TYPE
-      MessageType.END_SESSION -> MessageTypes.END_SESSION_BIT or MessageTypes.BASE_INBOX_TYPE
       MessageType.POLL_TERMINATE -> MessageTypes.SPECIAL_TYPE_POLL_TERMINATE or MessageTypes.BASE_INBOX_TYPE
       MessageType.PINNED_MESSAGE -> MessageTypes.SPECIAL_TYPE_PINNED_MESSAGE or MessageTypes.BASE_INBOX_TYPE
       MessageType.GROUP_UPDATE -> {
