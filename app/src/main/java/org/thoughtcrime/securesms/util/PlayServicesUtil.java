@@ -21,6 +21,17 @@ public class PlayServicesUtil {
     TRANSIENT_ERROR
   }
 
+  private static boolean isGmsPackageEnabled(Context context) {
+    try {
+      ApplicationInfo applicationInfo = context.getPackageManager().getApplicationInfo("com.google.android.gms", 0);
+
+      return applicationInfo != null && applicationInfo.enabled;
+    } catch (PackageManager.NameNotFoundException e) {
+      Log.w(TAG, e);
+      return false;
+    }
+  }
+
   public static PlayServicesStatus getPlayServicesStatus(Context context) {
     int gcmStatus = 0;
 
@@ -32,6 +43,12 @@ public class PlayServicesUtil {
     }
 
     Log.i(TAG, "Play Services: " + gcmStatus);
+
+    if (gcmStatus != ConnectionResult.SUCCESS && isGmsPackageEnabled(context)) {
+      Log.w(TAG, "Personal build: GoogleApiAvailability returned " + gcmStatus +
+                 ", but com.google.android.gms is installed/enabled. Treating as SUCCESS.");
+      return PlayServicesStatus.SUCCESS;
+    }
 
     switch (gcmStatus) {
       case ConnectionResult.SUCCESS:
