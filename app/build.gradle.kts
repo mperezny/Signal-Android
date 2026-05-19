@@ -10,7 +10,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.Properties
-id("com.google.gms.google-services") version "4.4.4"
+
 
 plugins {
   alias(libs.plugins.android.application)
@@ -23,6 +23,7 @@ plugins {
   id("com.squareup.wire")
   id("translations")
   id("licenses")
+  id("com.google.gms.google-services") version "4.4.4")
 }
 
 val staticIps = Properties().apply { file("static-ips.properties").reader().use { load(it) } }
