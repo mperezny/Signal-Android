@@ -48,6 +48,12 @@ jobs:
           android.enableJetifier=false
           EOF
 
+      - name: Restore google-services.json
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > Signal-Android/google-services.json
+
       - name: Build PlayProd Release APK
         env:
           GRADLE_OPTS: "-Xmx5632m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8 -XX:+UseParallelGC"
