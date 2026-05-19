@@ -81,7 +81,9 @@ public class FcmRefreshJob extends BaseJob {
 
   @Override
   public void onRun() throws Exception {
-    if (!SignalStore.account().isFcmEnabled()) return;
+    if (!SignalStore.account().isFcmEnabled()) {
+      Log.w(TAG, "Personal build: FCM is disabled in SignalStore. Continuing anyway.");
+    }
 
     Log.i(TAG, "Reregistering FCM...");
 
