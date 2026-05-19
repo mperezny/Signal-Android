@@ -88,25 +88,26 @@ public class FcmRefreshJob extends BaseJob {
     int result = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context);
 
     if (result != ConnectionResult.SUCCESS) {
-      notifyFcmFailure();
-    } else {
-      Optional<String> token = FcmUtil.getToken(context);
+      Log.w(TAG, "Personal build: GoogleApiAvailability returned " + result +
+                 ". Continuing to request FCM token anyway.");
+    }
 
-      if (token.isPresent()) {
-        String oldToken = SignalStore.account().getFcmToken();
+    Optional<String> token = FcmUtil.getToken(context);
 
-        if (!token.get().equals(oldToken)) {
-          int oldLength = oldToken != null ? oldToken.length() : -1;
-          Log.i(TAG, "Token changed. oldLength: " + oldLength + "  newLength: " + token.get().length());
-        } else {
-          Log.i(TAG, "Token didn't change.");
-        }
+    if (token.isPresent()) {
+      String oldToken = SignalStore.account().getFcmToken();
 
-        NetworkResultUtil.toBasicLegacy(SignalNetwork.account().setFcmToken(token.get()));
-        SignalStore.account().setFcmToken(token.get());
+      if (!token.get().equals(oldToken)) {
+        int oldLength = oldToken != null ? oldToken.length() : -1;
+        Log.i(TAG, "Token changed. oldLength: " + oldLength + "  newLength: " + token.get().length());
       } else {
-        throw new RetryLaterException(new IOException("Failed to retrieve a token."));
+        Log.i(TAG, "Token didn't change.");
       }
+
+      NetworkResultUtil.toBasicLegacy(SignalNetwork.account().setFcmToken(token.get()));
+      SignalStore.account().setFcmToken(token.get());
+    } else {
+      throw new RetryLaterException(new IOException("Failed to retrieve a token."));
     }
   }
 
