@@ -10,6 +10,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.Properties
+id("com.google.gms.google-services") version "4.4.4"
 
 plugins {
   alias(libs.plugins.android.application)
