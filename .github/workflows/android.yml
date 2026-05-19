@@ -103,7 +103,7 @@ jobs:
           "$BUILD_TOOLS/apksigner" verify \
             --verbose \
             --print-certs \
-            signal-playprod-arm64-v8a-release-signed.apk
+            signal-playprod-arm64-v8a-release-signed.apk 
 
       - name: Upload signed ARM64 APK
         if: success()
