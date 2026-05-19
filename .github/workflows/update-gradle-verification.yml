@@ -70,7 +70,7 @@ jobs:
 
       - name: Generate Gradle verification metadata
         run: |
-          ./gradlew --write-verification-metadata pgp,sha256 --export-keys :Signal-Android:help \
+          ./gradlew --write-verification-metadata sha256 :Signal-Android:help \
             --no-daemon \
             --max-workers=1 \
             --stacktrace
@@ -82,7 +82,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add gradle/verification-metadata.xml gradle/verification-keyring.keys || true
+          git add gradle/verification-metadata.xml
 
           if git diff --cached --quiet; then
             echo "No Gradle verification metadata changes to commit"
