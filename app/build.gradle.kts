@@ -23,7 +23,7 @@ plugins {
   id("com.squareup.wire")
   id("translations")
   id("licenses")
-  id("com.google.gms.google-services") version "4.4.4")
+  id("com.google.gms.google-services") version "4.4.4"
 }
 
 val staticIps = Properties().apply { file("static-ips.properties").reader().use { load(it) } }
