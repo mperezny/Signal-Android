@@ -54,10 +54,12 @@ jobs:
         run: |
           set -e
 
-          if [ -d "Signal-Android" ]; then
-            GOOGLE_SERVICES_TARGET="Signal-Android/google-services.json"
-          else
-            GOOGLE_SERVICES_TARGET="google-services.json"
+          GOOGLE_SERVICES_TARGET="app/google-services.json"
+
+          if [ ! -d "app" ]; then
+            echo "Expected app directory was not found"
+            find . -maxdepth 2 -type d | sort
+            exit 1
           fi
 
           printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > "$GOOGLE_SERVICES_TARGET"
